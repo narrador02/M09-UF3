@@ -13,7 +13,7 @@ public class Client {
     public void connecta() throws IOException {
         InetAddress addr = InetAddress.getByName(HOST);
         socket = new Socket(addr, PORT);
-        System.out.println("Connectat al servidor.");
+        System.out.println("Connectat a servidor en " + HOST + ":" + PORT);
     }
 
     public void enviaMissatges() throws IOException {
@@ -21,19 +21,23 @@ public class Client {
         Scanner sc = new Scanner(System.in);
         String missatge;
 
-        System.out.println("Escriu un missatge (escriu 'Adeu!' per sortir):");
-        do {
+        while (true) {
             missatge = sc.nextLine();
+            if (missatge.equals("")) break;
             out.println(missatge);
-        } while (!missatge.equals("Adeu!"));
+            System.out.println("Enviat al servidor: " + missatge);
+        }
 
-        sc.close();
+        System.out.println("Prem Enter per tancar el client...");
+        sc.nextLine();
+
         out.close();
+        sc.close();
     }
 
     public void tanca() throws IOException {
         if (socket != null) socket.close();
-        System.out.println("Client tancat.");
+        System.out.println("Client tancat");
     }
 
     public static void main(String[] args) {

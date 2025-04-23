@@ -22,8 +22,8 @@ public class Servidor {
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         String linia;
         while ((linia = in.readLine()) != null) {
+            if (linia.equals("")) break;
             System.out.println("Rebut: " + linia);
-            if (linia.equals("Adeu!")) break;
         }
         in.close();
     }
