@@ -2,64 +2,63 @@ import java.io.*;
 import java.net.*;
 
 public class ServidorXat {
-    public static final int PORT = 9999;
-    public static final String HOST = "localhost";
+    private static final int PORT = 9999;
+    private static final String HOST = "localhost";
     public static final String MSG_SORTIR = "sortir";
-    private ServerSocket serverSocket;
 
-    public void iniciarService() throws IOException {
+    private ServerSocket serverSocket;
+    private Socket clientSocket;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
+
+    public void iniciarServidor() throws IOException {
         serverSocket = new ServerSocket(PORT);
         System.out.println("Servidor iniciat a " + HOST + ":" + PORT);
+        clientSocket = serverSocket.accept();
+        System.out.println("Client connectat: " + clientSocket.getInetAddress());
     }
 
-    public void pararService() throws IOException {
-        if (serverSocket != null && !serverSocket.isClosed()) {
-            serverSocket.close();
-        }
+    public void pararServidor() throws IOException {
+        if (in != null) in.close();
+        if (out != null) out.close();
+        if (clientSocket != null) clientSocket.close();
+        if (serverSocket != null) serverSocket.close();
+        System.out.println("Servidor aturat.");
     }
 
-    public String getNom(ObjectInputStream in, ObjectOutputStream out) throws IOException, ClassNotFoundException {
-        out.writeObject("Escriu el teu nom:");
+    public String getNom() throws IOException, ClassNotFoundException {
+        in = new ObjectInputStream(clientSocket.getInputStream());
         return (String) in.readObject();
     }
 
     public static void main(String[] args) {
-        ServidorXat servidor = new ServidorXat();
         try {
-            servidor.iniciarService();
-            Socket clientSocket = servidor.serverSocket.accept();
-            System.out.println("Client connectat: " + clientSocket.getInetAddress());
+            ServidorXat servidor = new ServidorXat();
+            servidor.iniciarServidor();
 
-            ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+            servidor.out = new ObjectOutputStream(servidor.clientSocket.getOutputStream());
 
-            String nomClient = servidor.getNom(in, out);
-            System.out.println("Nom rebut: " + nomClient);
-
-            FilServidorXat fil = new FilServidorXat(in);
-            new Thread(fil).start();
+            String nom = servidor.getNom();
+            System.out.println("Nom rebut: " + nom);
             System.out.println("Fil de xat creat.");
-            System.out.println("Fil de " + nomClient + " iniciat");
+            System.out.println("Fil de " + nom + " iniciat");
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            FilServidorXat fil = new FilServidorXat(servidor.in);
+            fil.start();
+
+            BufferedReader teclat = new BufferedReader(new InputStreamReader(System.in));
             String missatge;
-            while (true) {
+            do {
                 System.out.print("Missatge ('sortir' per tancar): ");
-                missatge = reader.readLine();
-                out.writeObject(missatge);
-                out.flush();
-                
-                if (missatge.equals(MSG_SORTIR)) {
-                    System.out.println("Fil de xat finalitzat.");
-                    break;
-                }
-            }
-            
-            clientSocket.close();
-            servidor.pararService();
-            System.out.println("Servidor aturat.");
+                missatge = teclat.readLine();
+                servidor.out.writeObject(missatge);
+            } while (!missatge.equals(MSG_SORTIR));
+
+            fil.join();
+            servidor.pararServidor();
+
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

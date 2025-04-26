@@ -1,6 +1,6 @@
 import java.io.*;
 
-public class FilServidorXat implements Runnable {
+public class FilServidorXat extends Thread {
     private ObjectInputStream in;
 
     public FilServidorXat(ObjectInputStream in) {
@@ -10,16 +10,15 @@ public class FilServidorXat implements Runnable {
     @Override
     public void run() {
         try {
-            while (true) {
-                String missatge = (String) in.readObject();
+            String missatge;
+            while ((missatge = (String) in.readObject()) != null) {
+                if (missatge.equals(ServidorXat.MSG_SORTIR)) break;
                 System.out.println("Rebut: " + missatge);
-                
-                if (missatge.equals(ServidorXat.MSG_SORTIR)) {
-                    break;
-                }
             }
-        } catch (Exception e) {
-            System.out.println("Connexió amb el client tancada.");
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error en la lectura del client.");
+        } finally {
+            System.out.println("Fil de xat finalitzat.");
         }
     }
 }
