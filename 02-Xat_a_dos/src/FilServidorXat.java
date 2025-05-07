@@ -1,3 +1,4 @@
+package src;
 import java.io.*;
 
 public class FilServidorXat extends Thread {
