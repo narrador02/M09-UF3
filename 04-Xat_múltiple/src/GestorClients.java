@@ -41,8 +41,10 @@ public class GestorClients implements Runnable {
         } finally {
             try {
                 client.close();
+                ois.close();
+                oos.close();
             } catch (IOException e) {
-                System.out.println("Error tancant client: " + e.getMessage());
+                System.out.println("Error tancant recursos: " + e.getMessage());
             }
         }
     }
